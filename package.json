@@ -2,7 +2,7 @@
   "name": "basicfetch",
   "version": "1.0.0",
   "description": "http fetch utility",
-  "main": "index.ts",
+  "main": "/src/index.ts",
   "scripts": {
     "typecheck": "tsc",
     "test": "jest"
