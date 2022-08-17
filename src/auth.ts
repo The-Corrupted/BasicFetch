@@ -73,6 +73,7 @@ export interface WWWAuthorizationHeader {
 	// Optional parameter used by the client to indicate that the username has been
 	// hashed. Defaults to false
 	userhash?: boolean,
+	nonce: string,
 	algorithm: string,
 }
 
