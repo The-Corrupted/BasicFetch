@@ -1,0 +1,222 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: !0
+}), !function(t, e) {
+    for(var s in e)Object.defineProperty(t, s, {
+        enumerable: !0,
+        get: e[s]
+    });
+}(exports, {
+    HttpResponse: ()=>i,
+    BasicFetch: ()=>o
+});
+const t = require("@swc/helpers/lib/_interop_require_wildcard.js").default, e = t(require("http")), s = require("./auth"), r = require("crypto");
+class h {
+    _host = 'localhost';
+    _port = 80;
+    _maxHeaderSize = 16384;
+    _method = 'GET';
+    _path = '/';
+    _headers = {};
+    defaultArgs() {
+        return {
+            host: 'localhost',
+            maxHeaderSize: 16384,
+            method: 'GET',
+            path: '/',
+            port: 80
+        };
+    }
+    agent(t) {
+        return this._agent = t, this;
+    }
+    auth(t) {
+        return this._auth = t, this;
+    }
+    createConnection(t) {
+        return this._createConnection = t, this;
+    }
+    defaultPort(t) {
+        return this._defaultPort = t, this;
+    }
+    family(t) {
+        return this._family = t, this;
+    }
+    header(t) {
+        return this._headers = void 0 === this._headers ? t : Object.assign(this._headers, t), this;
+    }
+    host(t) {
+        return this._host = t, this;
+    }
+    hostname(t) {
+        return this._hostname = t, this;
+    }
+    localAddress(t) {
+        return this._localAddress = t, this;
+    }
+    lookup(t) {
+        return this._lookup = t, this;
+    }
+    maxHeaderSize(t) {
+        return this._maxHeaderSize = t, this;
+    }
+    method(t) {
+        return this._method = t, this;
+    }
+    path(t) {
+        return this._path = t, this;
+    }
+    port(t) {
+        return this._port = t, this;
+    }
+    protocol(t) {
+        return this._protocol = t, this;
+    }
+    setHost(t) {
+        return this._setHost = t, this;
+    }
+    signal(t) {
+        return this._signal = t, this;
+    }
+    socketPath(t) {
+        return this._socketPath = t, this;
+    }
+    timeout(t) {
+        return this._timeout = t, this;
+    }
+    compileOptions() {
+        let t = this.defaultArgs();
+        return this._agent && (t.agent = this._agent), this._auth && (t.auth = this._auth), this._createConnection && !t.agent && (t.createConnection = this._createConnection), this._defaultPort && (t.defaultPort = this._defaultPort), this._family && (t.family = this._family), this._headers && (t.headers = this._headers), this._signal && (t.signal = this._signal), this._timeout && (t.timeout = this._timeout), this._socketPath ? t.socketPath = this._socketPath : (this._hostname ? t.hostname = this._hostname : t.host = this._host, t.port = this._port), this._lookup && (t.lookup = this._lookup), t.maxHeaderSize = this._maxHeaderSize, t.method = this._method, t.path = this._path, t.protocol = this._protocol, t.setHost = this._setHost, t;
+    }
+}
+class i {
+    constructor(t, e, s, r){
+        this._body = t, this._statusCode = e, this._statusMessage = s, this._headers = r;
+    }
+    json() {
+        try {
+            let t = JSON.parse(this._body.toString());
+            return {
+                ok: !0,
+                value: t
+            };
+        } catch (e) {
+            return {
+                ok: !1,
+                error: Error(`Error: Failed to parse json ${e}`)
+            };
+        }
+    }
+    text() {
+        return this._body.toString();
+    }
+    bytes() {
+        return this._body;
+    }
+    get statusCode() {
+        return this._statusCode;
+    }
+    get statusMessage() {
+        return this._statusMessage;
+    }
+    getHeader(t) {
+        return Object.hasOwn(this._headers, t) ? {
+            ok: !0,
+            value: this._headers[t] ?? ''
+        } : {
+            ok: !1,
+            error: Error("Header " + t + " doesn't exist")
+        };
+    }
+    getHeaders() {
+        return this._headers;
+    }
+}
+class o extends h {
+    _body = void 0;
+    _query = [];
+    constructor(t){
+        super(), this._host = t ?? this._host;
+    }
+    json(t) {
+        return this._body = t, this._headers['content-type'] = 'application/json', this;
+    }
+    body(t) {
+        return this._body = t, this._headers['content-type'] = 'text/plain', this;
+    }
+    query(t) {
+        return this._query = this._query.concat(t), this;
+    }
+    handleQuery(t) {
+        return this._query.length > 0 && (t = t + '?' + this._query.map((t)=>t[0] + '=' + t[1]).join('&')), t;
+    }
+    send() {
+        return new Promise((t)=>{
+            let s = this.compileOptions();
+            s.path = this.handleQuery(s.path ?? '');
+            let r = e.request(s, (e)=>{
+                let s = e.headers ?? {}, r = s['content-length'], h = 'string' == typeof r ? parseInt(r) : 1, o = 'number' == typeof e.statusCode ? e.statusCode : -1, a = 'string' == typeof e.statusMessage ? e.statusMessage : '', n = Buffer.alloc(h, 0), u = 0;
+                e.on('data', (t)=>{
+                    n = n.fill(t, u), u += t.length;
+                }), e.on('end', ()=>{
+                    t({
+                        ok: !0,
+                        value: new i(n, o, a, s)
+                    });
+                });
+            });
+            if (r.on('error', (e)=>{
+                t({
+                    ok: !1,
+                    error: Error(`Request failed: ${e}`)
+                });
+            }), this._body) {
+                let h = '';
+                h = 'string' == typeof this._body ? this._body : JSON.stringify(this._body), r.end(h);
+            } else r.end();
+        });
+    }
+    async send_digest(t, e) {
+        let h = await this.send(), i;
+        if (!h.ok) return h;
+        i = h.value;
+        let o = i.getHeader('www-authenticate'), a;
+        if (!o.ok) return o;
+        a = o.value;
+        let n = (0, r.randomBytes)(32).toString('hex'), u = Buffer.from(n).toString('base64'), d = a;
+        if ('string' != typeof d) return {
+            ok: !1,
+            error: Error('Got invalid header value')
+        };
+        {
+            let l = s.Digest.parseAuthenticateHeader(d), c;
+            if (!l.ok) return l;
+            c = l.value;
+            let p = c.algorithm ?? 'MD5', m = s.Digest.computeHash({
+                algorithm: p,
+                method: this._method,
+                uri: this._path,
+                realm: c.realm,
+                username: t,
+                password: e,
+                nonce: c.nonce,
+                nc: '00000001',
+                cnonce: u,
+                qop: c.qop ?? 'auth'
+            }), g = s.Digest.buildAuthorizationHeader({
+                username: t,
+                realm: c.realm,
+                uri: this._path,
+                cnonce: u,
+                nonce: c.nonce,
+                nc: '00000001',
+                response: m,
+                qop: c.qop ?? 'auth',
+                algorithm: p
+            });
+            return this.header({
+                Authorization: g
+            }), await this.send();
+        }
+    }
+}
