@@ -7,7 +7,7 @@
 */
 
 
-import { Result } from './result';
+import { Result, Ok, Err } from './result';
 import { createHash } from 'crypto';
 
 export interface WWWAuthenticateHeader {
@@ -109,11 +109,11 @@ export class Digest {
 	private static extractAuthenticateValues(headerString: string): Result<string[][]> {
 		headerString = headerString.trim();
 		if (headerString.slice(0,6).toLowerCase() !== 'digest') 
-			return {ok: false, error: new Error('Unable to determine header type. Are you sure this is a Digest header?')};
+			return Err('Unable to determine header type. Are you sure this is a Digest header?');
 
 		const slice = headerString.slice(6,);
 		const values = slice.split(',').map(v=>v.trim()).map(v=>v.split('='));
-		return {ok: true, value: values};
+		return Ok(values);
 	}
 
 	public static parseAuthenticateHeader(header: string): Result<WWWAuthenticateHeader> {
@@ -164,7 +164,7 @@ export class Digest {
 			}
 
 		}
-		return {ok: true, value: baseHeader};
+		return Ok(baseHeader);
 	}
 	// TODO
 	//@ts-ignore

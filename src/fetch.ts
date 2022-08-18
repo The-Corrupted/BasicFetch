@@ -1,6 +1,6 @@
 import * as http from 'http'; 
 import { LookupFunction, Socket } from 'net';
-import { Result } from './result';
+import { Result, Ok, Err } from './result';
 import { Digest, WWWAuthenticateHeader } from './auth';
 import { createHash, randomBytes } from 'crypto';
 
@@ -176,9 +176,9 @@ export class HttpResponse {
 	public json<T>(): Result<T> {
 		try {
 			const json_body: T = JSON.parse(this._body.toString());
-			return {ok: true, value: json_body};
+			return Ok(json_body);
 		} catch(e) {
-			return {ok: false, error: new Error(`Error: Failed to parse json ${e}`)};
+			return Err(`Error: Failed to parse json ${e}`);
 		}
 	}
 
@@ -200,9 +200,9 @@ export class HttpResponse {
 
 	public getHeader(header: string): Result<string|string[]> {
 		if (Object.hasOwn(this._headers, header)) {
-			return { ok: true, value: this._headers[header] ?? ''};
+			return Ok(this._headers[header] ?? '');
 		} else {
-			return { ok: false, error: new Error("Header " + header + " doesn't exist") };
+			return Err("Header " + header + " doesn't exist");
 		}
 	}
 
@@ -272,12 +272,12 @@ export class BasicFetch extends RequestBuilder {
 				});
 
 				res.on('end', () => {
-					resolve({ ok: true, value: new HttpResponse(buf, statusCode, statusMessage, headers)});
+					resolve(Ok(new HttpResponse(buf, statusCode, statusMessage, headers)));
 				});
 			});	
 
 			request.on('error', (e) => {
-				resolve({ ok: false, error: new Error(`Request failed: ${e}`)});
+				resolve(Err(`Request failed: ${e}`));
 			});
 			if (this._body) {
 				let body: string = '';
@@ -345,7 +345,7 @@ export class BasicFetch extends RequestBuilder {
 			let final = await this.send();
 			return final;
 		} else {
-			return { ok: false, error: new Error('Got invalid header value') };
+			return Err('Got invalid header value');
 		}
 	}
 }
