@@ -2,9 +2,12 @@
   "name": "basicfetch",
   "version": "1.0.0",
   "description": "http fetch utility",
-  "main": "/src/index.ts",
+  "main": "/dist/index.js",
+  "types": "/dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.json --noEmit",
+	"types": "tsc -p tsconfig.json --declaration --emitDeclarationOnly --outDir ./dist",
+	"build": "npm run types && npx swc ./src -d ./dist",
     "test": "jest"
   },
   "author": "The-Corrupted",
