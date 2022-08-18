@@ -3,70 +3,61 @@ Object.defineProperty(exports, "__esModule", {
     value: !0
 }), Object.defineProperty(exports, "Digest", {
     enumerable: !0,
-    get: ()=>e
+    get: ()=>s
 });
-const t = require("crypto");
-class e {
+const t = require("./result"), e = require("crypto");
+class s {
     static stripQuotes(t) {
         return t.startsWith('"') && t.endsWith('"') ? t.substring(1, t.length - 1) : t;
     }
     static addQuotes(t) {
         return t.startsWith('"') && t.endsWith('"') ? t : '"' + t + '"';
     }
-    static extractAuthenticateValues(t) {
-        if ('digest' !== (t = t.trim()).slice(0, 6).toLowerCase()) return {
-            ok: !1,
-            error: Error('Unable to determine header type. Are you sure this is a Digest header?')
-        };
-        let e = t.slice(6), s = e.split(',').map((t)=>t.trim()).map((t)=>t.split('='));
-        return {
-            ok: !0,
-            value: s
-        };
+    static extractAuthenticateValues(e) {
+        if ('digest' !== (e = e.trim()).slice(0, 6).toLowerCase()) return (0, t.Err)('Unable to determine header type. Are you sure this is a Digest header?');
+        let s = e.slice(6), a = s.split(',').map((t)=>t.trim()).map((t)=>t.split('='));
+        return (0, t.Ok)(a);
     }
-    static parseAuthenticateHeader(t) {
-        let e = [], s = this.extractAuthenticateValues(t);
-        if (!s.ok) return s;
-        e = s.value;
-        let a = {
+    static parseAuthenticateHeader(e) {
+        let s = [], a = this.extractAuthenticateValues(e);
+        if (!a.ok) return a;
+        s = a.value;
+        let r = {
             realm: '',
             nonce: '',
             algorithm: 'md5',
             stale: !1,
             qop: 'auth'
         };
-        for (let [r, i] of e)switch(r){
+        for (let [i, o] of s)switch(i){
             case 'realm':
-                a.realm = this.stripQuotes(i);
+                r.realm = this.stripQuotes(o);
                 break;
             case 'qop':
-                a.qop = this.stripQuotes(i);
+                r.qop = this.stripQuotes(o);
                 break;
             case 'nonce':
-                a.nonce = this.stripQuotes(i);
+                r.nonce = this.stripQuotes(o);
                 break;
             case 'algorithm':
-                a.algorithm = this.stripQuotes(i);
+                r.algorithm = this.stripQuotes(o);
                 break;
             case 'opaque':
-                a.opaque = this.stripQuotes(i);
+                r.opaque = this.stripQuotes(o);
                 break;
             case 'stale':
-                a.stale = 'true' === this.stripQuotes(i).toLowerCase();
+                r.stale = 'true' === this.stripQuotes(o).toLowerCase();
                 break;
             case 'domain':
-                a.domain = this.stripQuotes(i).split(' ');
+                r.domain = this.stripQuotes(o).split(' ');
                 break;
             case 'charset':
-                a.charset = this.stripQuotes(i);
+                r.charset = this.stripQuotes(o);
                 break;
             case 'userhash':
-                a.userhash = 'true' === this.stripQuotes(i).toLowerCase();
+                r.userhash = 'true' === this.stripQuotes(o).toLowerCase();
         }
-        return {
-            ok: !0,
-            value: a
-        };
+        return (0, t.Ok)(r);
     }
     static parseAuthorizationHeader(t) {}
     static buildAuthorizationHeader(t) {
@@ -74,9 +65,9 @@ class e {
         for (let [s, a] of Object.entries(t))'boolean' == typeof a && (a = a.toString()), 'qop' === s || 'nc' === s || 'algorithm' === s || (a = this.addQuotes(a)), e.push(s + '=' + a);
         return 'Digest ' + e.join(', ');
     }
-    static _computeHash(e, s) {
-        let a = (0, t.createHash)(s);
-        return a.update(e), a.digest('hex');
+    static _computeHash(t, s) {
+        let a = (0, e.createHash)(s);
+        return a.update(t), a.digest('hex');
     }
     static computeHash(t) {
         let e = '', s = '', a = t.algorithm;

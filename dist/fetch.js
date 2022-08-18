@@ -7,11 +7,11 @@ Object.defineProperty(exports, "__esModule", {
         get: e[s]
     });
 }(exports, {
-    HttpResponse: ()=>i,
-    BasicFetch: ()=>o
+    HttpResponse: ()=>o,
+    BasicFetch: ()=>a
 });
-const t = require("@swc/helpers/lib/_interop_require_wildcard.js").default, e = t(require("http")), s = require("./auth"), r = require("crypto");
-class h {
+const t = require("@swc/helpers/lib/_interop_require_wildcard.js").default, e = t(require("http")), s = require("./result"), r = require("./auth"), h = require("crypto");
+class i {
     _host = 'localhost';
     _port = 80;
     _maxHeaderSize = 16384;
@@ -89,22 +89,16 @@ class h {
         return this._agent && (t.agent = this._agent), this._auth && (t.auth = this._auth), this._createConnection && !t.agent && (t.createConnection = this._createConnection), this._defaultPort && (t.defaultPort = this._defaultPort), this._family && (t.family = this._family), this._headers && (t.headers = this._headers), this._signal && (t.signal = this._signal), this._timeout && (t.timeout = this._timeout), this._socketPath ? t.socketPath = this._socketPath : (this._hostname ? t.hostname = this._hostname : t.host = this._host, t.port = this._port), this._lookup && (t.lookup = this._lookup), t.maxHeaderSize = this._maxHeaderSize, t.method = this._method, t.path = this._path, t.protocol = this._protocol, t.setHost = this._setHost, t;
     }
 }
-class i {
+class o {
     constructor(t, e, s, r){
         this._body = t, this._statusCode = e, this._statusMessage = s, this._headers = r;
     }
     json() {
         try {
             let t = JSON.parse(this._body.toString());
-            return {
-                ok: !0,
-                value: t
-            };
+            return (0, s.Ok)(t);
         } catch (e) {
-            return {
-                ok: !1,
-                error: Error(`Error: Failed to parse json ${e}`)
-            };
+            return (0, s.Err)(`Error: Failed to parse json ${e}`);
         }
     }
     text() {
@@ -120,19 +114,13 @@ class i {
         return this._statusMessage;
     }
     getHeader(t) {
-        return Object.hasOwn(this._headers, t) ? {
-            ok: !0,
-            value: this._headers[t] ?? ''
-        } : {
-            ok: !1,
-            error: Error("Header " + t + " doesn't exist")
-        };
+        return Object.hasOwn(this._headers, t) ? (0, s.Ok)(this._headers[t] ?? '') : (0, s.Err)("Header " + t + " doesn't exist");
     }
     getHeaders() {
         return this._headers;
     }
 }
-class o extends h {
+class a extends i {
     _body = void 0;
     _query = [];
     constructor(t){
@@ -152,70 +140,61 @@ class o extends h {
     }
     send() {
         return new Promise((t)=>{
-            let s = this.compileOptions();
-            s.path = this.handleQuery(s.path ?? '');
-            let r = e.request(s, (e)=>{
-                let s = e.headers ?? {}, r = s['content-length'], h = 'string' == typeof r ? parseInt(r) : 1, o = 'number' == typeof e.statusCode ? e.statusCode : -1, a = 'string' == typeof e.statusMessage ? e.statusMessage : '', n = Buffer.alloc(h, 0), u = 0;
+            let r = this.compileOptions();
+            r.path = this.handleQuery(r.path ?? '');
+            let h = e.request(r, (e)=>{
+                let r = e.headers ?? {}, h = r['content-length'], i = 'string' == typeof h ? parseInt(h) : 1, a = 'number' == typeof e.statusCode ? e.statusCode : -1, n = 'string' == typeof e.statusMessage ? e.statusMessage : '', u = Buffer.alloc(i, 0), d = 0;
                 e.on('data', (t)=>{
-                    n = n.fill(t, u), u += t.length;
+                    u = u.fill(t, d), d += t.length;
                 }), e.on('end', ()=>{
-                    t({
-                        ok: !0,
-                        value: new i(n, o, a, s)
-                    });
+                    t((0, s.Ok)(new o(u, a, n, r)));
                 });
             });
-            if (r.on('error', (e)=>{
-                t({
-                    ok: !1,
-                    error: Error(`Request failed: ${e}`)
-                });
+            if (h.on('error', (e)=>{
+                t((0, s.Err)(`Request failed: ${e}`));
             }), this._body) {
-                let h = '';
-                h = 'string' == typeof this._body ? this._body : JSON.stringify(this._body), r.end(h);
-            } else r.end();
+                let i = '';
+                i = 'string' == typeof this._body ? this._body : JSON.stringify(this._body), h.end(i);
+            } else h.end();
         });
     }
     async send_digest(t, e) {
-        let h = await this.send(), i;
-        if (!h.ok) return h;
-        i = h.value;
-        let o = i.getHeader('www-authenticate'), a;
-        if (!o.ok) return o;
-        a = o.value;
-        let n = (0, r.randomBytes)(32).toString('hex'), u = Buffer.from(n).toString('base64'), d = a;
-        if ('string' != typeof d) return {
-            ok: !1,
-            error: Error('Got invalid header value')
-        };
+        let i = await this.send(), o;
+        if (!i.ok) return i;
+        o = i.value;
+        let a = o.getHeader('www-authenticate'), n;
+        if (!a.ok) return a;
+        n = a.value;
+        let u = (0, h.randomBytes)(32).toString('hex'), d = Buffer.from(u).toString('base64'), l = n;
+        if ('string' != typeof l) return (0, s.Err)('Got invalid header value');
         {
-            let l = s.Digest.parseAuthenticateHeader(d), c;
-            if (!l.ok) return l;
-            c = l.value;
-            let p = c.algorithm ?? 'MD5', m = s.Digest.computeHash({
-                algorithm: p,
+            let c = r.Digest.parseAuthenticateHeader(l), p;
+            if (!c.ok) return c;
+            p = c.value;
+            let m = p.algorithm ?? 'MD5', g = r.Digest.computeHash({
+                algorithm: m,
                 method: this._method,
                 uri: this._path,
-                realm: c.realm,
+                realm: p.realm,
                 username: t,
                 password: e,
-                nonce: c.nonce,
+                nonce: p.nonce,
                 nc: '00000001',
-                cnonce: u,
-                qop: c.qop ?? 'auth'
-            }), g = s.Digest.buildAuthorizationHeader({
+                cnonce: d,
+                qop: p.qop ?? 'auth'
+            }), y = r.Digest.buildAuthorizationHeader({
                 username: t,
-                realm: c.realm,
+                realm: p.realm,
                 uri: this._path,
-                cnonce: u,
-                nonce: c.nonce,
+                cnonce: d,
+                nonce: p.nonce,
                 nc: '00000001',
-                response: m,
-                qop: c.qop ?? 'auth',
-                algorithm: p
+                response: g,
+                qop: p.qop ?? 'auth',
+                algorithm: m
             });
             return this.header({
-                Authorization: g
+                Authorization: y
             }), await this.send();
         }
     }
